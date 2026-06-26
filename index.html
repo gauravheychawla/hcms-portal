@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unisys HCMS — Autonomous Operations Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent:   #10B981;
+  --accent-hi:#34D399;
+  --bg:       #09090B;
+  --bg2:      #111113;
+  --bg3:      #18181B;
+  --border:   #27272A;
+  --border2:  #3F3F46;
+  --text:     #FAFAFA;
+  --text2:    #A1A1AA;
+  --text3:    #71717A;
+  --text4:    #52525B;
+}
+
+html, body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+@keyframes pulse-dot {
+  0%,100% { box-shadow: 0 0 0 0 #10B98160; }
+  50%      { box-shadow: 0 0 0 7px #10B98100; }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes stat-pop {
+  from { opacity: 0; transform: scale(.75) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes shimmer-border {
+  0%,100% { border-color: #1E3A2A; }
+  50%      { border-color: #10B98145; }
+}
+@keyframes pop-in {
+  0%   { opacity: 0; transform: scale(.85) translateY(12px); }
+  60%  { opacity: 1; transform: scale(1.03) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.topbar {
+  position: sticky; top: 0; z-index: 999;
+  background: #111113;
+  border-bottom: 1px solid #1E2A20;
+  padding: 0 24px;
+  height: 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(12px);
+}
+.topbar-left  { display: flex; align-items: center; gap: 16px; }
+.topbar-brand { font-size: 13px; font-weight: 800; color: var(--text); letter-spacing: 0.3px; }
+.topbar-sub   { font-size: 10px; color: var(--accent); font-weight: 600; }
+.topbar-sep   { color: #27272A; font-size: 18px; }
+.topbar-page  { font-size: 12px; color: var(--text3); font-weight: 500; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.topbar-clock { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); min-width: 180px; text-align: center; }
+.topbar-stats { font-size: 11px; color: var(--text3); }
+.topbar-eye   { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+.avatar-green { width: 24px; height: 24px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #000; }
+
+.layout { display: flex; height: calc(100vh - 48px); }
+
+.sidebar {
+  width: 220px; min-width: 220px;
+  background: #0D0D0F;
+  border-right: 1px solid #27272A;
+  display: flex; flex-direction: column;
+  overflow-y: auto; overflow-x: hidden;
+  position: sticky; top: 48px;
+  height: calc(100vh - 48px);
+  flex-shrink: 0;
+}
+.sidebar-logo {
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid #1A1A1D;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.sidebar-logo-title { font-size: 12px; font-weight: 800; color: var(--text); letter-spacing: 0.4px; }
+.sidebar-logo-sub   { font-size: 10px; color: var(--accent); font-weight: 600; }
+.sidebar-logo-icon  { font-size: 22px; margin-bottom: 4px; }
+
+.nav-section { padding: 10px 8px 4px; }
+.nav-section-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  color: var(--text4); text-transform: uppercase;
+  padding: 0 8px; margin-bottom: 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 10px; border-radius: 7px;
+  font-size: 12px; font-weight: 500; color: var(--text2);
+  cursor: pointer; transition: background .15s, color .15s;
+  border-left: 3px solid transparent;
+  margin-bottom: 1px; user-select: none;
+}
+.nav-item:hover { background: #18181B; color: var(--text); }
+.nav-item.active {
+  background: #10B98112; color: var(--accent);
+  border-left-color: var(--accent); font-weight: 700;
+}
+
+.main {
+  flex: 1; overflow-y: auto;
+  padding: 24px 28px 80px;
+}
+
+.hero {
+  background: linear-gradient(155deg, #0C1E16 0%, #111113 42%, #0A1520 100%);
+  border: 1.5px solid #1E3A2A;
+  border-radius: 16px;
+  padding: 26px 30px 20px;
+  margin-bottom: 20px;
+  position: relative; overflow: hidden;
+  animation: shimmer-border 4s ease-in-out infinite;
+}
+.hero-orb1 {
+  position: absolute; top: -70px; right: -70px;
+  width: 320px; height: 320px;
+  background: radial-gradient(circle, #10B98118, transparent 70%);
+  pointer-events: none;
+}
+.hero-orb2 {
+  position: absolute; bottom: -60px; left: -60px;
+  width: 240px; height: 240px;
+  background: radial-gradient(circle, #60A5FA0C, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { display: flex; align-items: center; gap: 30px; flex-wrap: wrap; }
+.hero-left  { flex: 1; min-width: 280px; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: #10B98112; border: 1px solid #10B98130;
+  border-radius: 20px; padding: 4px 14px;
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  color: #10B981; text-transform: uppercase; margin-bottom: 12px;
+  animation: slide-in .5s ease both;
+}
+.live-dot {
+  width: 7px; height: 7px; background: #10B981;
+  border-radius: 50%; display: inline-block;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+.hero-h1 {
+  font-size: 1.75rem; font-weight: 900; color: #FAFAFA;
+  line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 4px;
+  animation: slide-in .5s .1s ease both;
+}
+.hero-h2 {
+  font-size: 1.75rem; font-weight: 900; color: #10B981;
+  line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 12px;
+  animation: slide-in .5s .18s ease both;
+}
+.hero-sub {
+  font-size: 14px; color: #71717A; line-height: 1.7;
+  margin-bottom: 14px; max-width: 480px;
+  animation: fade-up .5s .28s ease both;
+}
+.hero-pills { display: flex; gap: 8px; flex-wrap: wrap; animation: fade-up .5s .36s ease both; }
+.hero-pill {
+  border-radius: 6px; padding: 5px 13px;
+  font-size: 12px; font-weight: 700;
+  transition: transform .15s ease, box-shadow .15s ease;
+  cursor: default;
+}
+.hero-pill:hover { transform: scale(1.07); }
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-width: 210px; }
+.stat-card {
+  background: #18181B; border: 1px solid #27272A;
+  border-radius: 11px; padding: 12px 14px; text-align: center;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
+  animation: stat-pop .4s ease both;
+  cursor: default;
+}
+.stat-card:hover { transform: translateY(-4px) scale(1.06); }
+.stat-val  { font-size: 24px; font-weight: 900; line-height: 1; }
+.stat-lbl  { font-size: 10px; color: #52525B; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+
+.hero-footer {
+  margin-top: 14px; padding-top: 11px; border-top: 1px solid #1E1E1E;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;
+}
+.hero-footer-left  { font-size: 11px; color: #3F3F46; }
+.hero-footer-right { font-size: 11px; color: #3F3F46; }
+kbd {
+  background: #1C1C1E; color: #71717A; border: 1px solid #3F3F46;
+  border-radius: 3px; padding: 1px 6px;
+  font-family: monospace; font-size: 10px;
+}
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+.card-blue {
+  background: #18181B; border: 1.5px solid #60A5FA;
+  border-radius: 12px; padding: 14px 18px;
+}
+.card-purple {
+  background: #18181B; border: 1.5px solid #A78BFA;
+  border-radius: 12px; padding: 14px 18px;
+}
+.card-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.card-desc { font-size: 12px; color: #A1A1AA; margin-bottom: 10px; }
+
+.search-input {
+  width: 100%; background: #111113; border: 1px solid #27272A;
+  border-radius: 8px; padding: 9px 14px; font-size: 13px;
+  color: #FAFAFA; font-family: 'Plus Jakarta Sans', sans-serif;
+  outline: none; transition: border-color .15s;
+}
+.search-input:focus { border-color: #60A5FA; }
+.search-input::placeholder { color: #52525B; }
+
+.alert-textarea {
+  width: 100%; background: #111113; border: 1px solid #27272A;
+  border-radius: 8px; padding: 9px 14px; font-size: 12px;
+  color: #FAFAFA; font-family: 'Plus Jakarta Sans', sans-serif;
+  outline: none; resize: vertical; height: 80px;
+  transition: border-color .15s;
+}
+.alert-textarea:focus { border-color: #A78BFA; }
+.alert-textarea::placeholder { color: #52525B; }
+
+.btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.btn-primary {
+  flex: 1; background: var(--accent); color: #000;
+  border: none; border-radius: 7px; padding: 8px 16px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background .15s, transform .1s;
+}
+.btn-primary:hover { background: #34D399; transform: translateY(-1px); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-secondary {
+  background: #18181B; color: #A1A1AA;
+  border: 1px solid #27272A; border-radius: 7px; padding: 8px 16px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background .15s, color .15s;
+}
+.btn-secondary:hover { background: #27272A; color: #FAFAFA; }
+
+.section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 3px;
+  color: var(--accent); text-transform: uppercase;
+  margin-bottom: 6px; margin-top: 4px;
+}
+.section-title {
+  font-size: 1rem; font-weight: 800; color: #FAFAFA;
+  margin-bottom: 12px;
+}
+
+.lifecycle-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px; }
+
+.lc-card {
+  background: #18181B; border-radius: 10px;
+  padding: 12px 6px; text-align: center;
+  margin-bottom: 4px; min-height: 108px;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, background .2s ease;
+  animation: pop-in .3s ease both;
+}
+.lc-card:hover { transform: translateY(-5px) scale(1.05); background: #1C1E1C; }
+.lc-card:active { transform: scale(0.95); }
+.lc-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: 10px;
+  background: var(--lc-glow); opacity: 0; transition: opacity .2s ease; pointer-events: none;
+}
+.lc-card:hover::after { opacity: 1; }
+.lc-icon  { font-size: 22px; margin-bottom: 5px; }
+.lc-stage { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 3px; }
+.lc-name  { font-size: 11px; font-weight: 700; color: #FAFAFA; line-height: 1.3; margin-bottom: 3px; }
+.lc-tip   { font-size: 9px; color: #71717A; line-height: 1.4; }
+
+.lc-btn-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 4px; }
+.lc-btn {
+  background: #18181B; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 6px;
+  padding: 6px 4px; font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background .15s, transform .1s;
+  text-align: center;
+}
+.lc-btn:hover { background: #10B98118; transform: translateY(-1px); }
+.lc-btn:active { transform: scale(0.96); }
+.lc-btn-disabled {
+  background: #111113; color: #52525B;
+  border: 1px solid #27272A; border-radius: 6px;
+  padding: 6px 4px; font-size: 11px; font-weight: 600;
+  cursor: not-allowed; font-family: 'Plus Jakarta Sans', sans-serif;
+  text-align: center;
+}
+
+.stage05-note {
+  background: #18181B; border: 1.5px solid #A78BFA;
+  border-left: 4px solid #A78BFA; border-radius: 10px;
+  padding: 12px 18px; margin-bottom: 20px; margin-top: 4px;
+}
+.stage05-note-title { font-size: 11px; font-weight: 700; color: #A78BFA; letter-spacing: 0.5px; margin-bottom: 4px; }
+.stage05-note-body  { font-size: 12px; color: #A1A1AA; line-height: 1.6; }
+
+.section-label-gray { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #71717A; text-transform: uppercase; margin-bottom: 10px; }
+
+.qa-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 24px; }
+.qa-card {
+  background: #18181B; border-radius: 10px;
+  padding: 12px 8px; text-align: center;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, background .18s ease;
+  animation: pop-in .35s ease both;
+}
+.qa-card:hover { transform: translateY(-4px) scale(1.04); background: #1E1E22; }
+.qa-card:active { transform: scale(0.96); }
+.qa-icon-wrap {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 8px auto; font-size: 20px;
+  transition: transform .18s ease;
+}
+.qa-name { font-size: 11px; font-weight: 700; line-height: 1.3; margin-bottom: 2px; }
+.qa-sub  { font-size: 10px; color: #71717A; margin-top: 2px; }
+.qa-btn {
+  width: 100%; margin-top: 6px;
+  background: #111113; color: #A1A1AA;
+  border: 1px solid #27272A; border-radius: 6px;
+  padding: 5px 4px; font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background .15s, color .15s;
+}
+.qa-btn:hover { background: #1E1E22; color: #FAFAFA; }
+
+.domains-row { display: grid; gap: 14px; margin-bottom: 14px; }
+.domains-row-4 { grid-template-columns: repeat(4, 1fr); }
+.domains-row-3 { grid-template-columns: repeat(3, 1fr); }
+
+.domain-card {
+  background: #18181B; border-radius: 14px;
+  padding: 18px 16px 14px; min-height: 190px;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, background .2s ease;
+  animation: pop-in .4s ease both;
+}
+.domain-card:hover { transform: translateY(-5px) scale(1.02); background: #1C1C20; }
+.domain-card:active { transform: scale(0.97); }
+.domain-card::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: var(--dc-glow); opacity: 0;
+  transition: opacity .25s ease; pointer-events: none;
+}
+.domain-card:hover::before { opacity: 1; }
+.domain-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.domain-icon  { font-size: 30px; transition: transform .2s ease; }
+.rag-badge {
+  display: flex; align-items: center; gap: 3px;
+  background: #111113; border-radius: 20px; padding: 2px 8px;
+}
+.rag-dot  { font-size: 7px; }
+.rag-lbl  { font-size: 9px; font-weight: 700; }
+.domain-title { font-size: 12px; font-weight: 800; color: #FAFAFA; margin-bottom: 5px; }
+.domain-desc  { font-size: 10px; color: #A1A1AA; line-height: 1.55; margin-bottom: 12px; }
+.domain-footer { display: flex; align-items: center; justify-content: space-between; }
+.domain-count-badge {
+  background: #111113; border-radius: 6px;
+  padding: 3px 10px; font-size: 10px; font-weight: 700;
+}
+.domain-arrow { font-size: 16px; font-weight: 700; transition: transform .2s ease; }
+.domain-btn {
+  width: 100%; margin-top: 8px;
+  background: #111113; border-radius: 7px;
+  padding: 7px 4px; font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background .15s, color .15s;
+  border: 1px solid #27272A; color: #A1A1AA;
+  text-align: center;
+}
+.domain-btn:hover { background: #1E1E22; color: #FAFAFA; }
+
+.stats-bottom { display: flex; gap: 14px; margin-top: 8px; margin-bottom: 8px; }
+.stat-bottom-card {
+  flex: 1; border-radius: 14px; padding: 20px 18px;
+  text-align: center; animation: countUp .6s ease-out both;
+  transition: transform .2s, box-shadow .2s;
+}
+.stat-bottom-card:hover { transform: translateY(-3px); }
+.stat-bottom-val { font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 6px; letter-spacing: -0.03em; }
+.stat-bottom-lbl { font-size: 11px; font-weight: 700; color: #FAFAFA; margin-bottom: 3px; letter-spacing: 0.5px; text-transform: uppercase; }
+.stat-bottom-sub { font-size: 10px; color: #71717A; }
+
+.footer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 998;
+  background: #060D0B; border-top: 1px solid #1E3A2A;
+  padding: 0 24px; height: 36px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.footer-left  { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 8px; }
+.footer-brand { font-weight: 700; color: var(--text2); }
+.footer-right { font-size: 8px; color: var(--text3); opacity: 0.5; }
+
+.toast {
+  position: fixed; bottom: 52px; right: 24px; z-index: 9999;
+  background: #18181B; border: 1px solid var(--accent);
+  border-radius: 10px; padding: 10px 18px;
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  box-shadow: 0 8px 24px #10B98130;
+  animation: fade-up .25s ease both;
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span style="font-size:18px">🛰️</span>
+    <span class="topbar-brand">UNISYS HCMS</span>
+    <span class="topbar-sub">HybridCloud Managed Services</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-page">Portal Home</span>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-clock" id="utc-clock">Loading...</span>
+    <span class="topbar-stats">38 Runbooks · 32 Domains</span>
+    <span class="topbar-eye">👁 104</span>
+    <span class="topbar-stats">2 users</span>
+    <div class="avatar-green">A</div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🛰️</div>
+      <div class="sidebar-logo-title">UNISYS HCMS</div>
+      <div class="sidebar-logo-sub">Autonomous Operations Portal</div>
+    </div>
+    <nav class="nav-section">
+      <div class="nav-item active" onclick="setActive(this,'Global MS Catalog')">🏠 <span>Global MS Catalog</span></div>
+      <div class="nav-item" onclick="setActive(this,'NOC War Room')">🚨 <span>NOC War Room</span></div>
+      <div class="nav-item" onclick="setActive(this,'Lifecycle')">🔄 <span>Lifecycle</span></div>
+      <div class="nav-item" onclick="setActive(this,'Runbook Engine On Prem')">🖥️ <span>Runbook Engine (On Prem)</span></div>
+      <div class="nav-item" onclick="setActive(this,'Runbook Engine Cloud')">☁️ <span>Runbook Engine (Cloud)</span></div>
+      <div class="nav-item" onclick="setActive(this,'Activities')">📋 <span>Activities</span></div>
+      <div class="nav-item" onclick="setActive(this,'Infra Automation')">⚙️ <span>Infra Automation</span></div>
+      <div class="nav-item" onclick="setActive(this,'Scripts')">📜 <span>Scripts</span></div>
+      <div class="nav-item" onclick="setActive(this,'CI/CD & Rollback')">🔁 <span>CI/CD &amp; Rollback</span></div>
+      <div class="nav-item" onclick="setActive(this,'ITSM')">🎫 <span>ITSM</span></div>
+      <div class="nav-item" onclick="setActive(this,'Observability')">📡 <span>Observability</span></div>
+      <div class="nav-item" onclick="setActive(this,'Agentic AI')">🤖 <span>Agentic AI</span></div>
+    </nav>
+    <nav class="nav-section">
+      <div class="nav-section-label">Analytics</div>
+      <div class="nav-item" onclick="setActive(this,'Pricing')">💰 <span>Pricing</span></div>
+      <div class="nav-item" onclick="setActive(this,'KPIs')">📊 <span>KPIs</span></div>
+      <div class="nav-item" onclick="setActive(this,'Best Practices')">📌 <span>Best Practices</span></div>
+      <div class="nav-item" onclick="setActive(this,'Visitor Analytics')">👁 <span>Visitor Analytics</span></div>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <div class="hero">
+      <div class="hero-orb1"></div>
+      <div class="hero-orb2"></div>
+      <div class="hero-inner">
+        <div class="hero-left">
+          <div class="hero-eyebrow">
+            <span class="live-dot"></span>
+            UNISYS HCMS &nbsp;·&nbsp; LIVE
+          </div>
+          <div class="hero-h1">HybridCloud Managed Services</div>
+          <div class="hero-h2">Autonomous Operations Portal</div>
+          <div class="hero-sub">One platform for all hybrid cloud ops — runbooks, agents, scripts, ITSM &amp; governance across on-prem, AWS, Azure, GCP.</div>
+          <div class="hero-pills">
+            <span class="hero-pill" style="background:#34D39912;border:1px solid #34D39940;color:#34D399;" onmouseover="this.style.boxShadow='0 4px 14px #34D39940'" onmouseout="this.style.boxShadow=''">⚡ 260+ Activities</span>
+            <span class="hero-pill" style="background:#60A5FA12;border:1px solid #60A5FA40;color:#60A5FA;" onmouseover="this.style.boxShadow='0 4px 14px #60A5FA40'" onmouseout="this.style.boxShadow=''">📚 38 Runbooks</span>
+            <span class="hero-pill" style="background:#A78BFA12;border:1px solid #A78BFA40;color:#A78BFA;" onmouseover="this.style.boxShadow='0 4px 14px #A78BFA40'" onmouseout="this.style.boxShadow=''">🤖 Agentic AI</span>
+            <span class="hero-pill" style="background:#FBBF2412;border:1px solid #FBBF2440;color:#FBBF24;" onmouseover="this.style.boxShadow='0 4px 14px #FBBF2440'" onmouseout="this.style.boxShadow=''">🕐 24×7</span>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card" style="border-top:3px solid #10B981;--sc:#10B98145;animation-delay:.4s" onmouseover="this.style.boxShadow='0 8px 24px #10B98145'" onmouseout="this.style.boxShadow=''">
+            <div class="stat-val" style="color:#10B981">32</div>
+            <div class="stat-lbl">Domains</div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid #60A5FA;animation-delay:.48s" onmouseover="this.style.boxShadow='0 8px 24px #60A5FA45'" onmouseout="this.style.boxShadow=''">
+            <div class="stat-val" style="color:#60A5FA">73%</div>
+            <div class="stat-lbl">Auto-Resolved</div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid #A78BFA;animation-delay:.56s" onmouseover="this.style.boxShadow='0 8px 24px #A78BFA45'" onmouseout="this.style.boxShadow=''">
+            <div class="stat-val" style="color:#A78BFA">18m</div>
+            <div class="stat-lbl">Avg MTTR</div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid #FBBF24;animation-delay:.64s" onmouseover="this.style.boxShadow='0 8px 24px #FBBF2445'" onmouseout="this.style.boxShadow=''">
+            <div class="stat-val" style="color:#FBBF24">4</div>
+            <div class="stat-lbl">Clouds</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-footer">
+        <div class="hero-footer-left"><kbd>/</kbd> Search &nbsp;·&nbsp; <kbd>Esc</kbd> Clear</div>
+        <div class="hero-footer-right">On-Prem &nbsp;·&nbsp; AWS &nbsp;·&nbsp; Azure &nbsp;·&nbsp; GCP &nbsp;·&nbsp; Kubernetes &nbsp;·&nbsp; ServiceNow</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card-blue">
+        <div class="card-label" style="color:#60A5FA">🔍 GLOBAL SEARCH</div>
+        <div class="card-desc">Search across all runbooks, scripts &amp; activities instantly</div>
+        <input class="search-input" id="global-search" type="text" placeholder="e.g. disk cleanup, high CPU, cert expiry...">
+      </div>
+      <div class="card-purple">
+        <div class="card-label" style="color:#A78BFA">⚡ ALERT TRIAGE</div>
+        <div class="card-desc">Paste a PagerDuty / monitoring alert → auto-match runbook</div>
+        <textarea class="alert-textarea" id="alert-text" placeholder="Paste alert text here...&#10;e.g. CRITICAL: Disk usage 94% on /dev/sda1 host=prod-web-01"></textarea>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="showToast('Running alert triage...')">⚡ Find Runbook</button>
+          <button class="btn-secondary" onclick="document.getElementById('alert-text').value=''">✕ Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">— HIS LIFECYCLE STAGES</div>
+    <div class="section-title">From Pre-Sales to Autonomous Operations — click a stage to explore</div>
+
+    <div class="lifecycle-strip">
+      <div class="lc-card" style="border:1.5px solid #1565C0;border-top:3px solid #1565C0;box-shadow:0 2px 12px #1565C025;--lc-glow:radial-gradient(circle at 50% 30%,#1565C018,transparent 65%);animation-delay:0s" onclick="showToast('Opening Onboarding...')">
+        <div class="lc-icon">🚀</div>
+        <div class="lc-stage" style="color:#1565C0">Stage 01</div>
+        <div class="lc-name">Onboarding</div>
+        <div class="lc-tip">Discovery · CMDB · Baseline</div>
+      </div>
+      <div class="lc-card" style="border:1.5px solid #6A1B9A;border-top:3px solid #6A1B9A;box-shadow:0 2px 12px #6A1B9A25;--lc-glow:radial-gradient(circle at 50% 30%,#6A1B9A18,transparent 65%);animation-delay:0.06s" onclick="showToast('Opening Transition...')">
+        <div class="lc-icon">🏗️</div>
+        <div class="lc-stage" style="color:#6A1B9A">Stage 02</div>
+        <div class="lc-name">Transition</div>
+        <div class="lc-tip">Migration · Handover · Validation</div>
+      </div>
+      <div class="lc-card" style="border:1.5px solid #00838F;border-top:3px solid #00838F;box-shadow:0 2px 12px #00838F25;--lc-glow:radial-gradient(circle at 50% 30%,#00838F18,transparent 65%);animation-delay:0.12s" onclick="showToast('Opening Steady State...')">
+        <div class="lc-icon">🔄</div>
+        <div class="lc-stage" style="color:#00838F">Stage 03</div>
+        <div class="lc-name">Steady State</div>
+        <div class="lc-tip">BAU Ops · SLA · ITSM</div>
+      </div>
+      <div class="lc-card" style="border:1.5px solid #2E7D32;border-top:3px solid #2E7D32;box-shadow:0 2px 12px #2E7D3225;--lc-glow:radial-gradient(circle at 50% 30%,#2E7D3218,transparent 65%);animation-delay:0.18s" onclick="showToast('Opening Automation...')">
+        <div class="lc-icon">⚡</div>
+        <div class="lc-stage" style="color:#2E7D32">Stage 04</div>
+        <div class="lc-name">Automation</div>
+        <div class="lc-tip">L1 Auto · Runbooks · Scripts</div>
+      </div>
+      <div class="lc-card" style="border:1.5px solid #6A1B9A;border-top:3px solid #6A1B9A;box-shadow:0 2px 12px #6A1B9A25;--lc-glow:radial-gradient(circle at 50% 30%,#6A1B9A18,transparent 65%);animation-delay:0.24s" onclick="showToast('Opening Infra Support...')">
+        <div class="lc-icon">🛠️</div>
+        <div class="lc-stage" style="color:#6A1B9A">Stage 05</div>
+        <div class="lc-name">Infra Support</div>
+        <div class="lc-tip">L1→L2→L3 · Self-healing · Alerting</div>
+      </div>
+      <div class="lc-card" style="border:1.5px solid #C62828;border-top:3px solid #C62828;box-shadow:0 2px 12px #C6282825;--lc-glow:radial-gradient(circle at 50% 30%,#C6282818,transparent 65%);animation-delay:0.30s">
+        <div class="lc-icon">🔐</div>
+        <div class="lc-stage" style="color:#C62828">Stage 06</div>
+        <div class="lc-name">CSIP</div>
+        <div class="lc-tip">Service reviews · Compliance · Improvement</div>
+      </div>
+      <div class="lc-card" style="border:1.5px solid #E65100;border-top:3px solid #E65100;box-shadow:0 2px 12px #E6510025;--lc-glow:radial-gradient(circle at 50% 30%,#E6510018,transparent 65%);animation-delay:0.36s" onclick="showToast('Opening Infra Operations...')">
+        <div class="lc-icon">🤖</div>
+        <div class="lc-stage" style="color:#E65100">Stage 07</div>
+        <div class="lc-name">Infra Operations</div>
+        <div class="lc-tip">AIOps · Cloud Ops · SecOps</div>
+      </div>
+    </div>
+    <div class="lc-btn-row">
+      <button class="lc-btn" onclick="showToast('Opening Onboarding...')">Explore →</button>
+      <button class="lc-btn" onclick="showToast('Opening Transition...')">Explore →</button>
+      <button class="lc-btn" onclick="showToast('Opening Steady State...')">Explore →</button>
+      <button class="lc-btn" onclick="showToast('Opening Automation...')">Explore →</button>
+      <button class="lc-btn" onclick="showToast('Opening Runbook Engine...')">Explore →</button>
+      <span class="lc-btn-disabled">Coming →</span>
+      <button class="lc-btn" onclick="showToast('Opening Agentic AI...')">Explore →</button>
+    </div>
+
+    <div class="stage05-note">
+      <div class="stage05-note-title">🛠️ Stage 05 · Infra Support — Self Healing</div>
+      <div class="stage05-note-body">
+        Day-2 operations with <b style="color:#FAFAFA">L1 → L2 → HITL → L3 → ServiceNow</b> tiered runbooks.
+        Alert-driven self-healing, change management, and SLA tracking across On-Prem, AWS &amp; Azure.
+        Click <b style="color:#FAFAFA">Explore →</b> on Stage 05 to open the Runbook Engine.
+      </div>
+    </div>
+
+    <div class="section-label-gray">— QUICK ACCESS</div>
+
+    <div class="qa-strip">
+      <div>
+        <div class="qa-card" style="border:1.5px solid #0EA5E9;box-shadow:0 2px 14px #0EA5E928;animation-delay:0s">
+          <div class="qa-icon-wrap" style="background:#0EA5E922">🖥️</div>
+          <div class="qa-name" style="color:#0EA5E9">Runbook Engine</div>
+          <div class="qa-sub">On-Prem L1→L3</div>
+        </div>
+        <button class="qa-btn" onclick="showToast('Opening Runbook Engine (On Prem)...')">Go →</button>
+      </div>
+      <div>
+        <div class="qa-card" style="border:1.5px solid #60A5FA;box-shadow:0 2px 14px #60A5FA28;animation-delay:0.05s">
+          <div class="qa-icon-wrap" style="background:#60A5FA22">☁️</div>
+          <div class="qa-name" style="color:#60A5FA">Cloud Runbooks</div>
+          <div class="qa-sub">AWS · Azure</div>
+        </div>
+        <button class="qa-btn" onclick="showToast('Opening Cloud Runbooks...')">Go →</button>
+      </div>
+      <div>
+        <div class="qa-card" style="border:1.5px solid #34D399;box-shadow:0 2px 14px #34D39928;animation-delay:0.10s">
+          <div class="qa-icon-wrap" style="background:#34D39922">⚙️</div>
+          <div class="qa-name" style="color:#34D399">Infra Automation</div>
+          <div class="qa-sub">260 activities</div>
+        </div>
+        <button class="qa-btn" onclick="showToast('Opening Infra Automation...')">Go →</button>
+      </div>
+      <div>
+        <div class="qa-card" style="border:1.5px solid #FBBF24;box-shadow:0 2px 14px #FBBF2428;animation-delay:0.15s">
+          <div class="qa-icon-wrap" style="background:#FBBF2422">📜</div>
+          <div class="qa-name" style="color:#FBBF24">Script Library</div>
+          <div class="qa-sub">PS · Bash · Python</div>
+        </div>
+        <button class="qa-btn" onclick="showToast('Opening Script Library...')">Go →</button>
+      </div>
+      <div>
+        <div class="qa-card" style="border:1.5px solid #A78BFA;box-shadow:0 2px 14px #A78BFA28;animation-delay:0.20s">
+          <div class="qa-icon-wrap" style="background:#A78BFA22">🤖</div>
+          <div class="qa-name" style="color:#A78BFA">Agentic AI</div>
+          <div class="qa-sub">6 agents</div>
+        </div>
+        <button class="qa-btn" onclick="showToast('Opening Agentic AI...')">Go →</button>
+      </div>
+      <div>
+        <div class="qa-card" style="border:1.5px solid #F87171;box-shadow:0 2px 14px #F8717128;animation-delay:0.25s">
+          <div class="qa-icon-wrap" style="background:#F8717122">📊</div>
+          <div class="qa-name" style="color:#F87171">KPIs</div>
+          <div class="qa-sub">40+ metrics</div>
+        </div>
+        <button class="qa-btn" onclick="showToast('Opening KPIs...')">Go →</button>
+      </div>
+      <div>
+        <div class="qa-card" style="border:1.5px solid #00D68F;box-shadow:0 2px 14px #00D68F28;animation-delay:0.30s">
+          <div class="qa-icon-wrap" style="background:#00D68F22">🎫</div>
+          <div class="qa-name" style="color:#00D68F">ITSM</div>
+          <div class="qa-sub">ServiceNow</div>
+        </div>
+        <button class="qa-btn" onclick="showToast('Opening ITSM...')">Go →</button>
+      </div>
+    </div>
+
+    <div class="section-label">— SELECT YOUR OPERATIONS DOMAIN</div>
+    <div class="section-title">7 Domains · Click to explore solutions</div>
+
+    <div class="domains-row domains-row-4">
+      <div>
+        <div class="domain-card" style="border:1px solid #00C8FF;border-top:3px solid #00C8FF;box-shadow:0 2px 18px #00C8FF20;--dc-glow:radial-gradient(circle,#00C8FF20,transparent 70%);animation-delay:0s">
+          <div class="domain-card-header">
+            <div class="domain-icon">☁️</div>
+            <div class="rag-badge" style="border:1px solid #00E5A0">
+              <span class="rag-dot" style="color:#00E5A0">●</span>
+              <span class="rag-lbl" style="color:#00E5A0">Full Coverage</span>
+            </div>
+          </div>
+          <div class="domain-title">CloudOps</div>
+          <div class="domain-desc">End-to-end cloud operations across AWS, Azure &amp; GCP</div>
+          <div class="domain-footer">
+            <span class="domain-count-badge" style="border:1px solid #00C8FF;color:#00C8FF">8 solutions</span>
+            <span class="domain-arrow" style="color:#00C8FF">→</span>
+          </div>
+        </div>
+        <button class="domain-btn" style="border-color:#00C8FF;color:#00C8FF" onclick="showToast('Opening CloudOps...')">Explore CloudOps</button>
+      </div>
+      <div>
+        <div class="domain-card" style="border:1px solid #A78BFA;border-top:3px solid #A78BFA;box-shadow:0 2px 18px #A78BFA20;--dc-glow:radial-gradient(circle,#A78BFA20,transparent 70%);animation-delay:0.06s">
+          <div class="domain-card-header">
+            <div class="domain-icon">🤖</div>
+            <div class="rag-badge" style="border:1px solid #00E5A0">
+              <span class="rag-dot" style="color:#00E5A0">●</span>
+              <span class="rag-lbl" style="color:#00E5A0">Full Coverage</span>
+            </div>
+          </div>
+          <div class="domain-title">AIOps</div>
+          <div class="domain-desc">AI-powered alert correlation, anomaly detection</div>
+          <div class="domain-footer">
+            <span class="domain-count-badge" style="border:1px solid #A78BFA;color:#A78BFA">6 solutions</span>
+            <span class="domain-arrow" style="color:#A78BFA">→</span>
+          </div>
+        </div>
+        <button class="domain-btn" style="border-color:#A78BFA;color:#A78BFA" onclick="showToast('Opening AIOps...')">Explore AIOps</button>
+      </div>
+      <div>
+        <div class="domain-card" style="border:1px solid #F87171;border-top:3px solid #F87171;box-shadow:0 2px 18px #F8717120;--dc-glow:radial-gradient(circle,#F8717120,transparent 70%);animation-delay:0.12s">
+          <div class="domain-card-header">
+            <div class="domain-icon">🔒</div>
+            <div class="rag-badge" style="border:1px solid #00E5A0">
+              <span class="rag-dot" style="color:#00E5A0">●</span>
+              <span class="rag-lbl" style="color:#00E5A0">Full Coverage</span>
+            </div>
+          </div>
+          <div class="domain-title">SecOps</div>
+          <div class="domain-desc">Security operations — IAM, cert lifecycle, CIS hardening</div>
+          <div class="domain-footer">
+            <span class="domain-count-badge" style="border:1px solid #F87171;color:#F87171">7 solutions</span>
+            <span class="domain-arrow" style="color:#F87171">→</span>
+          </div>
+        </div>
+        <button class="domain-btn" style="border-color:#F87171;color:#F87171" onclick="showToast('Opening SecOps...')">Explore SecOps</button>
+      </div>
+      <div>
+        <div class="domain-card" style="border:1px solid #34D399;border-top:3px solid #34D399;box-shadow:0 2px 18px #34D39920;--dc-glow:radial-gradient(circle,#34D39920,transparent 70%);animation-delay:0.18s">
+          <div class="domain-card-header">
+            <div class="domain-icon">🔁</div>
+            <div class="rag-badge" style="border:1px solid #00E5A0">
+              <span class="rag-dot" style="color:#00E5A0">●</span>
+              <span class="rag-lbl" style="color:#00E5A0">Full Coverage</span>
+            </div>
+          </div>
+          <div class="domain-title">DevOps</div>
+          <div class="domain-desc">CI/CD pipelines, blue-green deployments, rollback</div>
+          <div class="domain-footer">
+            <span class="domain-count-badge" style="border:1px solid #34D399;color:#34D399">5 solutions</span>
+            <span class="domain-arrow" style="color:#34D399">→</span>
+          </div>
+        </div>
+        <button class="domain-btn" style="border-color:#34D399;color:#34D399" onclick="showToast('Opening DevOps...')">Explore DevOps</button>
+      </div>
+    </div>
+
+    <div class="domains-row domains-row-3">
+      <div>
+        <div class="domain-card" style="border:1px solid #FBBF24;border-top:3px solid #FBBF24;box-shadow:0 2px 18px #FBBF2420;--dc-glow:radial-gradient(circle,#FBBF2420,transparent 70%);animation-delay:0.24s">
+          <div class="domain-card-header">
+            <div class="domain-icon">💰</div>
+            <div class="rag-badge" style="border:1px solid #FBBF24">
+              <span class="rag-dot" style="color:#FBBF24">●</span>
+              <span class="rag-lbl" style="color:#FBBF24">Partial</span>
+            </div>
+          </div>
+          <div class="domain-title">FinOps</div>
+          <div class="domain-desc">Cloud cost governance, rightsizing, anomaly detection</div>
+          <div class="domain-footer">
+            <span class="domain-count-badge" style="border:1px solid #FBBF24;color:#FBBF24">4 solutions</span>
+            <span class="domain-arrow" style="color:#FBBF24">→</span>
+          </div>
+        </div>
+        <button class="domain-btn" style="border-color:#FBBF24;color:#FBBF24" onclick="showToast('Opening FinOps...')">Explore FinOps</button>
+      </div>
+      <div>
+        <div class="domain-card" style="border:1px solid #60A5FA;border-top:3px solid #60A5FA;box-shadow:0 2px 18px #60A5FA20;--dc-glow:radial-gradient(circle,#60A5FA20,transparent 70%);animation-delay:0.30s">
+          <div class="domain-card-header">
+            <div class="domain-icon">🔑</div>
+            <div class="rag-badge" style="border:1px solid #00E5A0">
+              <span class="rag-dot" style="color:#00E5A0">●</span>
+              <span class="rag-lbl" style="color:#00E5A0">Full Coverage</span>
+            </div>
+          </div>
+          <div class="domain-title">IAM</div>
+          <div class="domain-desc">Identity lifecycle, RBAC enforcement, privileged access</div>
+          <div class="domain-footer">
+            <span class="domain-count-badge" style="border:1px solid #60A5FA;color:#60A5FA">5 solutions</span>
+            <span class="domain-arrow" style="color:#60A5FA">→</span>
+          </div>
+        </div>
+        <button class="domain-btn" style="border-color:#60A5FA;color:#60A5FA" onclick="showToast('Opening IAM...')">Explore IAM</button>
+      </div>
+      <div>
+        <div class="domain-card" style="border:1px solid #00D68F;border-top:3px solid #00D68F;box-shadow:0 2px 18px #00D68F20;--dc-glow:radial-gradient(circle,#00D68F20,transparent 70%);animation-delay:0.36s">
+          <div class="domain-card-header">
+            <div class="domain-icon">🎫</div>
+            <div class="rag-badge" style="border:1px solid #FBBF24">
+              <span class="rag-dot" style="color:#FBBF24">●</span>
+              <span class="rag-lbl" style="color:#FBBF24">Partial</span>
+            </div>
+          </div>
+          <div class="domain-title">ITSM</div>
+          <div class="domain-desc">ServiceNow workflows, ticket automation, CMDB sync</div>
+          <div class="domain-footer">
+            <span class="domain-count-badge" style="border:1px solid #00D68F;color:#00D68F">6 solutions</span>
+            <span class="domain-arrow" style="color:#00D68F">→</span>
+          </div>
+        </div>
+        <button class="domain-btn" style="border-color:#00D68F;color:#00D68F" onclick="showToast('Opening ITSM...')">Explore ITSM</button>
+      </div>
+    </div>
+
+    <div class="stats-bottom">
+      <div class="stat-bottom-card" style="background:#18181B;border:1.5px solid #60A5FA;border-top:3px solid #60A5FA;box-shadow:0 4px 24px #60A5FA30;animation-delay:0s">
+        <div class="stat-bottom-val" style="color:#60A5FA">38</div>
+        <div class="stat-bottom-lbl">Runbooks</div>
+        <div class="stat-bottom-sub">On-Prem + Cloud</div>
+      </div>
+      <div class="stat-bottom-card" style="background:#18181B;border:1.5px solid #10B981;border-top:3px solid #10B981;box-shadow:0 4px 24px #10B98130;animation-delay:0.15s">
+        <div class="stat-bottom-val" style="color:#10B981">260+</div>
+        <div class="stat-bottom-lbl">Auto Activities</div>
+        <div class="stat-bottom-sub">Windows &amp; Linux</div>
+      </div>
+      <div class="stat-bottom-card" style="background:#18181B;border:1.5px solid #A78BFA;border-top:3px solid #A78BFA;box-shadow:0 4px 24px #A78BFA30;animation-delay:0.30s">
+        <div class="stat-bottom-val" style="color:#A78BFA">7</div>
+        <div class="stat-bottom-lbl">Op Domains</div>
+        <div class="stat-bottom-sub">CloudOps to ITSM</div>
+      </div>
+      <div class="stat-bottom-card" style="background:#18181B;border:1.5px solid #FBBF24;border-top:3px solid #FBBF24;box-shadow:0 4px 24px #FBBF2430;animation-delay:0.45s">
+        <div class="stat-bottom-val" style="color:#FBBF24">24×7</div>
+        <div class="stat-bottom-lbl">Managed &amp; Operated</div>
+        <div class="stat-bottom-sub">AI-first delivery</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="footer-left">
+    <span>🛰️</span>
+    <span class="footer-brand">Unisys HCMS Autonomous Operations Portal</span>
+    <span style="color:#52525B">·</span>
+    <span>Proprietary &amp; Confidential — Unauthorised use strictly prohibited</span>
+  </div>
+  <div class="footer-right">© 2026 Gaurav Chawla · Unisys</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  function updateClock() {
+    var now = new Date();
+    var y = now.getUTCFullYear();
+    var mo = String(now.getUTCMonth()+1).padStart(2,'0');
+    var d = String(now.getUTCDate()).padStart(2,'0');
+    var h = String(now.getUTCHours()).padStart(2,'0');
+    var mi = String(now.getUTCMinutes()).padStart(2,'0');
+    var s = String(now.getUTCSeconds()).padStart(2,'0');
+    document.getElementById('utc-clock').textContent = y+'-'+mo+'-'+d+' '+h+':'+mi+':'+s+' UTC';
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === '/') {
+      e.preventDefault();
+      document.getElementById('global-search').focus();
+    }
+    if (e.key === 'Escape') {
+      document.getElementById('global-search').value = '';
+      document.getElementById('global-search').blur();
+    }
+  });
+
+  window.setActive = function(el, name) {
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    el.classList.add('active');
+  };
+
+  var toastTimer;
+  window.showToast = function(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { t.style.display = 'none'; }, 2200);
+  };
+})();
+</script>
+</body>
+</html>
