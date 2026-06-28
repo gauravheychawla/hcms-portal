@@ -846,18 +846,20 @@ kbd {
 
 <script>
 (function() {
+  var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function updateClock() {
+    var el = document.getElementById('utc-clock');
+    if (!el) return;
     var now = new Date();
-    var y = now.getUTCFullYear();
-    var mo = String(now.getUTCMonth()+1).padStart(2,'0');
-    var d = String(now.getUTCDate()).padStart(2,'0');
-    var h = String(now.getUTCHours()).padStart(2,'0');
-    var mi = String(now.getUTCMinutes()).padStart(2,'0');
-    var s = String(now.getUTCSeconds()).padStart(2,'0');
-    document.getElementById('utc-clock').textContent = y+'-'+mo+'-'+d+' '+h+':'+mi+':'+s+' UTC';
+    var p = function(v){ return String(v).padStart(2,'0'); };
+    el.textContent = DAYS[now.getUTCDay()] + ' ' + MONTHS[now.getUTCMonth()] + ' ' + now.getUTCDate()
+      + '  ' + p(now.getUTCHours()) + ':' + p(now.getUTCMinutes()) + ':' + p(now.getUTCSeconds()) + ' UTC';
   }
-  updateClock();
-  setInterval(updateClock, 1000);
+  document.addEventListener('DOMContentLoaded', function() {
+    updateClock();
+    setInterval(updateClock, 1000);
+  });
 
   document.addEventListener('keydown', function(e) {
     if (e.key === '/') {
